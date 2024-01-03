@@ -1,0 +1,173 @@
+asdasdasd
+dasdalsdlA#include <stdio.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <string.h>
+
+int main() {
+    DIR *dir;
+    struct dirent *ent;
+    struct stat buf;
+    char path[1024];
+    int txt_count = 0, pdf_count = 0, jpg_count = 0, png_count = 0;
+    long long total_size = 0, min_size = LLONG_MAX, max_size = 0;
+    char min_file[1024], max_file[1024];
+
+    char directory[1024];
+    printf("Please enter the directory path: ");
+    scanf("%s", directory);
+
+    if ((dir = opendir (directory)) != NULL) {
+        while ((ent = readdir (dir)) != NULL) {
+            snprintf(path, sizeof(path), "%s/%s", directory, ent->d_name);
+            if (stat(path, &buf) == 0) {
+                total_size += buf.st_size;
+                if (buf.st_size < min_size) {
+                    min_size = buf.st_size;
+                    strcpy(min_file, path);
+                }
+                if (buf.st_size > max_size) {
+                    max_size = buf.st_size;
+                    strcpy(max_file, path);
+                }
+                char *ext = strrchr(ent->d_name,'.');
+                if (ext != NULL) {
+                    if (strcmp(ext, ".txt") == 0) txt_count++;
+                    else if (strcmp(ext, ".pdf") == 0) pdf_count++;
+                    else if (strcmp(ext, ".jpg") == 0) jpg_count++;
+                    else if (strcmp(ext, ".png") == 0) png_count++;
+                }
+            }
+        }
+        closedir (dir);
+    } else {
+        perror ("");
+        return EXIT_FAILURE;
+    }
+
+    printf("Total number of files: %d\n", txt_count + pdf_count + jpg_count + png_count);
+    printf("Number of each file type:\n");
+    printf("- .txt: %d\n", txt_count);
+    printf("- .pdf: %d\n", pdf_count);
+    printf("- .jpg: %d\n", jpg_count);
+    printf("- .png: %d\n", png_count);
+    printf("File with the largest size: %s, Size: %.2f MB\n", max_file, max_size / (1024.0 * 1024.0));
+    printf("File with the smallest size: %s, Size: %.2f KB\n", min_file, min_size / 1024.0);
+    printf("Size of the root folder: %.2f MB\n", total_size / (1024.0 * 1024.0));
+
+    return 0;
+}#include <stdio.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <string.h>
+
+int main() {
+    DIR *dir;
+    struct dirent *ent;
+    struct stat buf;
+    char path[1024];
+    int txt_count = 0, pdf_count = 0, jpg_count = 0, png_count = 0;
+    long long total_size = 0, min_size = LLONG_MAX, max_size = 0;
+    char min_file[1024], max_file[1024];
+
+    char directory[1024];
+    printf("Please enter the directory path: ");
+    scanf("%s", directory);
+
+    if ((dir = opendir (directory)) != NULL) {
+        while ((ent = readdir (dir)) != NULL) {
+            snprintf(path, sizeof(path), "%s/%s", directory, ent->d_name);
+            if (stat(path, &buf) == 0) {
+                total_size += buf.st_size;
+                if (buf.st_size < min_size) {
+                    min_size = buf.st_size;
+                    strcpy(min_file, path);
+                }
+                if (buf.st_size > max_size) {
+                    max_size = buf.st_size;
+                    strcpy(max_file, path);
+                }
+                char *ext = strrchr(ent->d_name,'.');
+                if (ext != NULL) {
+                    if (strcmp(ext, ".txt") == 0) txt_count++;
+                    else if (strcmp(ext, ".pdf") == 0) pdf_count++;
+                    else if (strcmp(ext, ".jpg") == 0) jpg_count++;
+                    else if (strcmp(ext, ".png") == 0) png_count++;
+                }
+            }
+        }
+        closedir (dir);
+    } else {
+        perror ("");
+        return EXIT_FAILURE;
+    }
+
+    printf("Total number of files: %d\n", txt_count + pdf_count + jpg_count + png_count);
+    printf("Number of each file type:\n");
+    printf("- .txt: %d\n", txt_count);
+    printf("- .pdf: %d\n", pdf_count);
+    printf("- .jpg: %d\n", jpg_count);
+    printf("- .png: %d\n", png_count);
+    printf("File with the largest size: %s, Size: %.2f MB\n", max_file, max_size / (1024.0 * 1024.0));
+    printf("File with the smallest size: %s, Size: %.2f KB\n", min_file, min_size / 1024.0);
+    printf("Size of the root folder: %.2f MB\n", total_size / (1024.0 * 1024.0));
+
+    return 0;
+}#include <stdio.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <string.h>
+
+int main() {
+    DIR *dir;
+    struct dirent *ent;
+    struct stat buf;
+    char path[1024];
+    int txt_count = 0, pdf_count = 0, jpg_count = 0, png_count = 0;
+    long long total_size = 0, min_size = LLONG_MAX, max_size = 0;
+    char min_file[1024], max_file[1024];
+
+    char directory[1024];
+    printf("Please enter the directory path: ");
+    scanf("%s", directory);
+
+    if ((dir = opendir (directory)) != NULL) {
+        while ((ent = readdir (dir)) != NULL) {
+            snprintf(path, sizeof(path), "%s/%s", directory, ent->d_name);
+            if (stat(path, &buf) == 0) {
+                total_size += buf.st_size;
+                if (buf.st_size < min_size) {
+                    min_size = buf.st_size;
+                    strcpy(min_file, path);
+                }
+                if (buf.st_size > max_size) {
+                    max_size = buf.st_size;
+                    strcpy(max_file, path);
+                }
+                char *ext = strrchr(ent->d_name,'.');
+                if (ext != NULL) {
+                    if (strcmp(ext, ".txt") == 0) txt_count++;
+                    else if (strcmp(ext, ".pdf") == 0) pdf_count++;
+                    else if (strcmp(ext, ".jpg") == 0) jpg_count++;
+                    else if (strcmp(ext, ".png") == 0) png_count++;
+                }
+            }
+        }
+        closedir (dir);
+    } else {
+        perror ("");
+        return EXIT_FAILURE;
+    }
+
+    printf("Total number of files: %d\n", txt_count + pdf_count + jpg_count + png_count);
+    printf("Number of each file type:\n");
+    printf("- .txt: %d\n", txt_count);
+    printf("- .pdf: %d\n", pdf_count);
+    printf("- .jpg: %d\n", jpg_count);
+    printf("- .png: %d\n", png_count);
+    printf("File with the largest size: %s, Size: %.2f MB\n", max_file, max_size / (1024.0 * 1024.0));
+    printf("File with the smallest size: %s, Size: %.2f KB\n", min_file, min_size / 1024.0);
+    printf("Size of the root folder: %.2f MB\n", total_size / (1024.0 * 1024.0));
+
+    return 0;
+}
