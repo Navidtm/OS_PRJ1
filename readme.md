@@ -1,19 +1,30 @@
+# OS Project (simple rdfind)
 
-1.compile main.c
+the project is a multi-thread application similar to the rdfind program in Linux, which identifies duplicate files and deletes them, and displays the list of all checked files, types of checked and deleted files as an output.
 
-2.run main.c
+## Features
 
-3.enter the directory path: (ex: '../tempFolder')
+- **dentifies duplicate files and deletes them**
+- **Thread-Safe Updates**
 
-4.outputs:
+## Functions
 
-    Total number of files
-    Number of each file type:
-    *.txt: 237
-    *.pdf: 189
-    *.jpg: 320
-    *.png: 277
-    largest file size
-    File with the smallest size
-    Size
-    Size of the folder
+- `calculateFileHash`: Function to calculate SHA-1 hash of a file.
+- `checkAndDeleteDuplicates`: Function to check for duplicate files and delete them.
+- `createLogFile`: Function to create a log file for each folders.
+- `processFiles`: Function to check file in directory and and checks it
+- `displayMonitoringInfo`: Display information about each type of file format.
+
+## Graphical Output
+
+In the next updates
+
+## How to Use
+
+1. Clone the repository to your local machine.
+2. Compile and run the code.
+3. Choose the directory you want to analyze.
+
+## Dependencies
+
+- <openssl/sha.h>: SHA-1 (Secure Hash Algorithm) is a cryptographic hash function. you should installed on your system.

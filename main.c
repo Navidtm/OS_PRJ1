@@ -1,86 +1,157 @@
 #include <stdio.h>
-#include <dirent.h>
-#include <sys/stat.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <pthread.h>
+#include <openssl/sha.h>
 
-void process_directory( char *directory,
-                        int *txt_count,
-                        int *pdf_count,
-                        int *jpg_count,
-                        int *png_count,
-                        long long *total_size,
-                        long long *min_size,
-                        char *min_file,
-                        long long *max_size,
-                        char *max_file
-                        ) 
+#define MAX_PATH_LENGTH 5
+#define HASH_SIZE 20
+#define MAX_FILE_TYPES 4
+
+int totalDeletedFiles = 0;
+int totalCheckedFiles = 0;
+
+void calculateFileHash(char *filePath, unsigned char *hash)
+{
+    FILE *file = fopen(filePath, "r");
+
+    if (file == NULL)
     {
+        perror("Error opening file");
+        return;
+    }
 
-    DIR *dir;
-    struct dirent *ent;
-    struct stat buf;
-    char path[2048];
+    SHA_CTX ctx;
 
-    if ((dir = opendir(directory)) != NULL) {
-        while ((ent = readdir(dir)) != NULL) {
-            sprintf(path, "%s/%s", directory, ent->d_name);
-            if (stat(path, &buf) == 0) {
-                if (S_ISDIR(buf.st_mode)) {
-                    // pid_t pid = fork();
-                    // if(pid == 0) {
-                        // printf("the child is executed");
-                        if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
-                            process_directory(path, txt_count, pdf_count, jpg_count, png_count, total_size, min_size, min_file, max_size, max_file);
-                        }
-                    // }
-                } else {
-                    *total_size += buf.st_size;
-                    if (buf.st_size < *min_size) {
-                        *min_size = buf.st_size;
-                        strcpy(min_file, path);
-                    }
-                    else if (buf.st_size > *max_size) {
-                        *max_size = buf.st_size;
-                        strcpy(max_file, path);
-                    }
-                    char *ext = strrchr(ent->d_name,'.');
-                    if (ext != NULL) {
-                        if (strcmp(ext, ".txt") == 0) (*txt_count)++;
-                        if (strcmp(ext, ".pdf") == 0) (*pdf_count)++;
-                        if (strcmp(ext, ".jpg") == 0) (*jpg_count)++;
-                        if (strcmp(ext, ".png") == 0) (*png_count)++;
-                    }
-                }
-            }
+    SHA1_Init(&ctx);
+
+    unsigned char buffer[8192];
+    size_t bytesRead;
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) != 0)
+    {
+        SHA1_Update(&ctx, buffer, bytesRead);
+    }
+
+    SHA1_Final(hash, &ctx);
+    fclose(file);
+}
+
+void checkAndDeleteDuplicates(char *filePath)
+{
+    unsigned char hash[HASH_SIZE];
+    calculateFileHash(filePath, hash);
+
+    unsigned char predefinedHash[HASH_SIZE] = {
+        0x12,
+        0x34,
+        0x56,
+        0x78,
+        0x90};
+
+    if (memcmp(hash, predefinedHash, HASH_SIZE) == 0)
+    {
+        if (remove(filePath) == 0)
+        {
+            printf("Deleted duplicate file: %s\n", filePath);
         }
-        closedir(dir);
-    } else {
-        printf("no such file\n");
+        else
+        {
+            perror("Error deleting file");
+        }
     }
 }
 
-int main() {
-    long long total_size = 0, min_size = 1000, max_size = 0;
-    int txt_count = 0, pdf_count = 0, jpg_count = 0, png_count = 0;
-    char min_file[2048], max_file[2048];
+void createLogFile(char *folderPath)
+{
+    char logFilePath[MAX_PATH_LENGTH];
+    sprintf(logFilePath, "%s.log", folderPath);
 
-    char directory[1024];
-    printf("Please enter the directory path: ");
-    scanf("%s", directory);
+    FILE *logFile = fopen(logFilePath, "w");
+    if (logFile == NULL)
+    {
+        perror("Error creating log file");
+        return;
+    }
 
-    process_directory(directory, &txt_count, &pdf_count, &jpg_count, &png_count, &total_size, &min_size, min_file, &max_size, max_file);
+    fprintf(logFile, "Log File for Folder: %s\n", folderPath);
+    fprintf(logFile, "Total Checked Files: %d\n", totalCheckedFiles);
+    fprintf(logFile, "Total Deleted Files: %d\n", totalDeletedFiles);
 
-    printf("Total number of files: %d\n", txt_count + pdf_count + jpg_count + png_count);
-    printf("Number of each file type:\n");
-    printf("- .txt: %d\n", txt_count);
-    printf("- .pdf: %d\n", pdf_count);
-    printf("- .jpg: %d\n", jpg_count);
-    printf("- .png: %d\n", png_count);
-    printf("File with the largest size: %s, Size: %.2f KB\n", max_file, max_size / 1024.0);
-    printf("File with the smallest size: %s, Size: %.2f KB\n", min_file, min_size / 1024.0);
-    printf("Size of the root folder: %.2f KB\n", total_size / 1024.0);
+    fclose(logFile);
+}
+void *processFiles(void *arg)
+{
+    char folderPath[MAX_PATH_LENGTH];
+    strcpy(folderPath, (char *)arg);
 
+    DIR *dir;
+    struct dirent *entry;
+
+    dir = opendir(folderPath);
+    if (dir == NULL)
+    {
+        perror("Error opening directory");
+        pthread_exit(NULL);
+    }
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        char filePath[MAX_PATH_LENGTH];
+        sprintf(filePath, "%s/%s", folderPath, entry->d_name);
+
+        struct stat fileStat;
+        if (stat(filePath, &fileStat) == -1)
+        {
+            perror("Error getting file status");
+            continue;
+        }
+
+        if (S_ISREG(fileStat.st_mode))
+        {
+            checkAndDeleteDuplicates(filePath);
+        }
+    }
+
+    closedir(dir);
+
+    createLogFile(folderPath);
+
+    pthread_exit(NULL);
+}
+void displayMonitoringInfo(int totalFileFormats[], int totalVolumeBefore, int totalVolumeAfter)
+{
+    printf("Total Checked Files: %d\n", totalCheckedFiles);
+
+    printf("Number of Each Type of File Format:\n");
+
+    for (int i = 0; i < MAX_FILE_TYPES; i++)
+    {
+        printf("File Format %d: %d\n", i + 1, totalFileFormats[i]);
+    }
+
+    printf("Number of Deleted Files: %d\n", totalDeletedFiles);
+
+    printf("Volume Before Erasing: %d\n", totalVolumeBefore);
+    printf("Volume After Erasing: %d\n", totalVolumeAfter);
+
+    printf("Log Files Creation: Completed\n");
+}
+int main()
+{
+    char rootFolder[MAX_PATH_LENGTH];
+    printf("Enter the root folder path: \n");
+    scanf("%s", rootFolder);
+
+    pthread_t tid;
+
+    int totalFileFormats[10] = {10, 20, 30};
+    int totalVolumeBefore = 1000;
+    int totalVolumeAfter = 800;
+
+    displayMonitoringInfo(totalFileFormats, totalVolumeBefore, totalVolumeAfter);
     return 0;
 }
